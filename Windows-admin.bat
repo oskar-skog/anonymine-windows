@@ -52,12 +52,13 @@ if exist %cygwin_dir% (
     rmdir %dlroot%
 )
 
-echo Installing %python_pkg% and the game
-%cygwin_setup% --wait -q -M -R %cygwin_dir% -P python -P make
+:: Do this with the foo script instead.
+:: echo Installing %python_pkg% and the game
+:: %cygwin_setup% --wait -q -M -R %cygwin_dir% -P python -P make
 
 :: bash -l to use the Cygwin $PATH rather than the MS %PATH%.
 :: Then you'll need to go back to $OLDPWD.
 %cygwin_dir%\bin\bash -lc 'echo "(Workaround): Do not remove!"'
 %cygwin_dir%\bin\bash -lc ^
-    'cd $OLDPWD; ./configure -v && make && make install && ./cygwin-sshd rmssh'
+    'cd $OLDPWD; ./foo admin install'
 

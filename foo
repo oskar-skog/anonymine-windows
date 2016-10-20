@@ -1,0 +1,103 @@
+#!/bin/bash
+
+usage ()
+{
+    echo "Usage: ./foo {admin|user} {install|uninstall|update}" > /dev/stderr
+    exit 1
+}
+
+error ()
+{
+    while [ $# -gt 0 ]; do
+        echo "<<error>> $1" > /dev/stderr
+        shift
+    done
+    # Keep executing.
+}
+fatal ()
+{
+    while [ $# -gt 0 ]; do
+        echo "<<fatal>> $1" > /dev/stderr
+        shift
+    done
+    echo 'Execution stopped due to fatal error.' > /dev/stderr
+    exit 1
+}
+
+ask ()
+{
+    while true ; do
+        read -p "<<< $1? (yes/no): " answer
+        if [ -n "`echo $answer | grep -E '^[Yy]([Ee][Ss])?$'`" ]; then
+            return 0
+        fi
+        if [ -n "`echo $answer | grep -E '^[Nn][Oo]?$'`" ]; then
+            return 1
+        fi
+    done
+}
+
+cyg_setup ()
+{
+    /setup.exe -q "$cyg_setup_flags" -R "$(cygpath --windows /)" $@
+}
+
+_update ()
+{
+    cd anonymine
+    while true; do
+        git pull && ./configure -v && make && make install && break
+        echo "An error has occurred."
+        ask "Fix manually" && bash
+        ask "Retry" || break
+    done
+    cd ..
+}
+
+update ()
+{
+    echo >> log
+    date >> log
+    _update 2>&1 | tee -a log
+}
+
+install ()
+{
+    cyg_setup -P git -P make -P git
+    git clone https://github.com/oskar-skog/anonymine.git
+    update
+    
+}
+
+uninstall ()
+{
+}
+
+main ()
+{
+    [ $# -ne 2 ] || usage
+    case "$1" in
+        user)
+            cyg_setup_flags="-B"
+            ;;
+        admin)
+            cyg_setup_flags="--wait"
+            ;;
+        *)
+            usage
+            ;;
+    esac
+    case "$2" in
+        install)
+            install
+            ;;
+        update)
+            update
+            ;;
+        uninstall)
+            uninstall
+            ;;
+        *)
+            usage
+    esac
+}

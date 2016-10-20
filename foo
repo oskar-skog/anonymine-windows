@@ -6,6 +6,12 @@ usage ()
     exit 1
 }
 
+# Globals
+#       dependencies
+#       self_mode
+#       setup_flags
+#       mkshortcut_flags
+
 error ()
 {
     while [ $# -gt 0 ]; do
@@ -23,6 +29,7 @@ fatal ()
     echo 'Execution stopped due to fatal error.' > /dev/stderr
     exit 1
 }
+
 
 ask ()
 {
@@ -63,15 +70,6 @@ update ()
     _update 2>&1 | tee -a log
 }
 
-shortcut_wrap ()
-{
-    # {-P|-D} name cmd
-    mkshortcut "$mkshortcut_flags" "$1" -n "$2" -a '-lc '"$3" \
-        -w "$(pwd)" -i "$(pwd)/icon.ico" /bin/bash.exe
-}
-
-dependencies="git make python"
-
 uninstall ()
 {
     cd anonymine
@@ -85,6 +83,13 @@ uninstall ()
 
 install ()
 {
+    shortcut_wrap ()
+    {
+        # {-P|-D} name cmd
+        mkshortcut "$mkshortcut_flags" "$1" -n "$2" -a '-lc '"$3" \
+            -w "$(pwd)" -i "$(pwd)/icon.ico" /bin/bash.exe
+    }
+    
     shortcut_d=0
     shortcut_m=0
     maintenance_d=0
@@ -116,8 +121,10 @@ install ()
     fi
 }
 
+
 main ()
 {
+    dependencies="git make python"
     [ $# -ne 2 ] || usage
     case "$1" in
         user)

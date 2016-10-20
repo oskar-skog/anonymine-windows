@@ -155,7 +155,7 @@ install ()
     echo "*****************************"
     echo
     
-    
+    # Start the time consuming work.
     echo >> log; echo >> log; echo >> log; echo >> log; echo >> log
     echo "Installing Anonymine..." >> log; date >> log
     # Dependencies:

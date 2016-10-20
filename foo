@@ -28,10 +28,10 @@ ask ()
 {
     while true ; do
         read -p "<<< $1? (yes/no): " answer
-        if [ -n "`echo $answer | grep -E '^[Yy]([Ee][Ss])?$'`" ]; then
+        if [ -n "$(echo $answer | grep -E '^[Yy]([Ee][Ss])?$')" ]; then
             return 0
         fi
-        if [ -n "`echo $answer | grep -E '^[Nn][Oo]?$'`" ]; then
+        if [ -n "$(echo $answer | grep -E '^[Nn][Oo]?$')" ]; then
             return 1
         fi
     done
@@ -39,38 +39,81 @@ ask ()
 
 cyg_setup ()
 {
-    /setup.exe -q "$cyg_setup_flags" -R "$(cygpath --windows /)" $@
-}
-
-_update ()
-{
-    cd anonymine
-    while true; do
-        git pull && ./configure -v && make && make install && break
-        echo "An error has occurred."
-        ask "Fix manually" && bash
-        ask "Retry" || break
-    done
-    cd ..
+    /setup.exe -q "$setup_flags" -R "$(cygpath --windows /)" $@
 }
 
 update ()
 {
+    _update ()
+    {
+        cd anonymine
+        while true; do
+            # Install new
+            git pull && ./configure -v && make && make install && break
+            # Not reached, hopefully
+            echo "An error has occurred."
+            ask "Fix manually" && bash
+            ask "Retry" || break
+        done
+        cd ..
+    }
+    
     echo >> log
     date >> log
     _update 2>&1 | tee -a log
 }
 
-install ()
+shortcut_wrap ()
 {
-    cyg_setup -P git -P make -P git
-    git clone https://github.com/oskar-skog/anonymine.git
-    update
-    
+    # {-P|-D} name cmd
+    mkshortcut "$mkshortcut_flags" "$1" -n "$2" -a '-lc '"$3" \
+        -w "$(pwd)" -i "$(pwd)/icon.ico" /bin/bash.exe
 }
+
+dependencies="git make python"
 
 uninstall ()
 {
+    cd anonymine
+    make uninstall
+    cd ..
+    rm -r anonymine
+    for dependency in $dependencies; do
+        ask "Uninstall $dependency" && cyg_setup -x "$dependency"
+    done
+}
+
+install ()
+{
+    shortcut_d=0
+    shortcut_m=0
+    maintenance_d=0
+    maintenance_m=0
+    ask "Desktop shortcut" && shortcut_d=1
+    ask "Menu shortcut" && shortcut_m=1
+    ask "Desktop shortcut for update and uninstall" && maintenance_d=1
+    ask "Menu shortcut for update and uninstall" && maintenance_m=1
+    
+    for dependency in $dependencies; do
+        cyg_setup -P "$dependency"
+    done
+    git clone https://github.com/oskar-skog/anonymine.git
+    update
+    
+    if [ $shortcut_d -ne 0 ]; then
+        shortcut_wrap -D "Anonymine" "anonymine"
+    fi
+    if [ $shortcut_m -ne 0 ]; then
+        shortcut_wrap -P "Anonymine" "anonymine"
+    fi
+    if [ $maintenance_d -ne 0 ]; then
+        shortcut_wrap -D "Update Anonymine" "./foo $self_mode update"
+        shortcut_wrap -D "Uninstall Anonymine" "./foo $self_mode uninstall"
+    fi
+    if [ $maintenance_m -ne 0 ]; then
+        shortcut_wrap -P "Update Anonymine" "./foo $self_mode update"
+        shortcut_wrap -P "Uninstall Anonymine" "./foo $self_mode uninstall"
+    fi
 }
 
 main ()
@@ -78,10 +121,14 @@ main ()
     [ $# -ne 2 ] || usage
     case "$1" in
         user)
-            cyg_setup_flags="-B"
+            setup_flags="-B"
+            mkshortcut_flags=""
+            self_mode="user"
             ;;
         admin)
-            cyg_setup_flags="--wait"
+            setup_flags="--wait"
+            mkshortcut_flags="-A"
+            self_mode="admin"
             ;;
         *)
             usage

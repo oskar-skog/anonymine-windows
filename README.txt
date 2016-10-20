@@ -26,4 +26,4 @@ Installation instructions for Windows
         only have to click "next" a few times.
         (This will only happen the first time you install the game.)
     
-    4.  
+    4.  Answer the questions that appear in the terminal window.

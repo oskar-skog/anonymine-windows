@@ -67,7 +67,7 @@ update ()
     while true; do
         # Update and log
         { git pull && ./configure -v && make && make install && break;
-        } 2>&1 | tee -a ../log
+            } 2>&1 | tee -a ../log
         # Not reached, hopefully
         error "Failed to update"
         ask "Fix manually" && {
@@ -85,10 +85,28 @@ update ()
 
 uninstall ()
 {
-    cd anonymine
-    make uninstall
-    cd ..
+    # Failing to cd into anonymine, but succeeding to cd to ..
+    (cd anonymine; make uninstall; cd ..)
+    # caused really nasty trouble:
     rm -rf anonymine
+    
+    # http://superuser.com/questions/86078/where-do-start-menu-all-programs-shortcuts-reside
+    home="$(cygpath --unix $USERPROFILE)"
+    directories=(
+"/cygdrive/c/Documents and Settings/All Users/Start Menu/Programs/"
+"$home/Start Menu/Programs/"
+"/cygdrive/c/ProgramData/Microsoft/Windows/Start Menu/Programs/"
+"$home/AppData/Roaming/Microsoft/Windows/Start Menu/Programs/"
+"/cygdrive/c/Documents and Settings/All Users/Desktop"
+"/cygdrive/c/Users/Public/Desktop/"
+"$home/Desktop/"
+    )
+    files=("Anonymine.lnk" "Uninstall Anonymine.lnk" "Update Anonymine.lnk")
+    for directory in "${directories[@]}"; do
+        for file in "${files[@]}"; do
+            rm "$directory$file"
+        done
+    done
     
     for dependency in $dependencies; do
         ask "Uninstall $dependency" && cyg_setup -x "$dependency"
@@ -114,6 +132,13 @@ install ()
     }
     
     # Get configuration before doing time consuming work.
+    echo
+    echo "*****************************"
+    echo "*                           *"
+    echo "*  Now for those questions  *"
+    echo "*                           *"
+    echo "*****************************"
+    echo
     shortcut_d=0
     shortcut_m=0
     maintenance_d=0
@@ -122,6 +147,14 @@ install ()
     ask "Menu shortcut" && shortcut_m=1
     ask "Desktop shortcut for update and uninstall" && maintenance_d=1
     ask "Menu shortcut for update and uninstall" && maintenance_m=1
+    echo
+    echo "*****************************"
+    echo "*                           *"
+    echo "*  Installing....           *"
+    echo "*                           *"
+    echo "*****************************"
+    echo
+    
     
     echo >> log; echo >> log; echo >> log; echo >> log; echo >> log
     echo "Installing Anonymine..." >> log; date >> log
@@ -129,14 +162,13 @@ install ()
     for dependency in $dependencies; do
         cyg_setup -P "$dependency" 2>&1 | tee -a log
     done
+    # This one is here for the convenience of the debuggers.
+    [ -d anonymine ] && ask "Remove old ./anonymine/" && rm -rf anonymine
     # Try to clone Anonymine
-    success=0
-    { git clone https://github.com/oskar-skog/anonymine.git && success=1;
-    } 2>&1 | tee -a log
-    if [ $success -eq 0 ]; then
+    git clone https://github.com/oskar-skog/anonymine.git || {
         echo "Could not download Anonymine." >> log;
         fatal "Could not download Anonymine.";
-    fi
+    }
     # update does ./configure && make && make install
     update
     

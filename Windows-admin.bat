@@ -59,6 +59,5 @@ if exist %cygwin_dir% (
 :: bash -l to use the Cygwin $PATH rather than the MS %PATH%.
 :: Then you'll need to go back to $OLDPWD.
 %cygwin_dir%\bin\bash -lc 'echo "(Workaround): Do not remove!"'
-%cygwin_dir%\bin\bash -lc ^
-    'cd $OLDPWD; ./foo admin install'
+%cygwin_dir%\bin\bash -lc 'cd $OLDPWD; ./foo admin install'
 

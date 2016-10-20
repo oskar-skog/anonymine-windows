@@ -12,24 +12,6 @@ usage ()
 #       setup_flags
 #       mkshortcut_flags
 
-error ()
-{
-    while [ $# -gt 0 ]; do
-        echo "<<error>> $1" > /dev/stderr
-        shift
-    done
-    # Keep executing.
-}
-fatal ()
-{
-    while [ $# -gt 0 ]; do
-        echo "<<fatal>> $1" > /dev/stderr
-        shift
-    done
-    echo 'Execution stopped due to fatal error.' > /dev/stderr
-    exit 1
-}
-
 
 ask ()
 {
@@ -44,42 +26,76 @@ ask ()
     done
 }
 
+
+error ()
+{
+    while [ $# -gt 0 ]; do
+        echo "<<error>> $1" > /dev/stderr
+        shift
+    done
+}
+
+
+fatal ()
+{
+    while [ $# -gt 0 ]; do
+        echo "<<fatal>> $1" > /dev/stderr
+        shift
+    done
+    echo 'Execution stopped due to fatal error.' > /dev/stderr
+    # Terminal's gonna go poof!
+    while ! ask "Quit"; do
+        error "No is not an option"
+    done
+    exit 1
+}
+
+
+# Wrapper
 cyg_setup ()
 {
     /setup.exe -q "$setup_flags" -R "$(cygpath --windows /)" $@
 }
 
+
 update ()
 {
-    _update ()
-    {
-        cd anonymine
-        while true; do
-            # Install new
-            git pull && ./configure -v && make && make install && break
-            # Not reached, hopefully
-            echo "An error has occurred."
-            ask "Fix manually" && bash
-            ask "Retry" || break
-        done
-        cd ..
-    }
+    echo >> log; echo >> log; echo >> log; echo >> log; echo >> log;
+    date >> log;
     
-    echo >> log
-    date >> log
-    _update 2>&1 | tee -a log
+    cd anonymine
+    while true; do
+        # Update and log
+        { git pull && ./configure -v && make && make install && break;
+        } 2>&1 | tee -a ../log
+        # Not reached, hopefully
+        error "Failed to update"
+        ask "Fix manually" && {
+            echo "Exit when you're done.";
+            bash;
+            ask "Fixed it" && break;
+        }
+        ask "Retry" && continue
+        fatal "Failed to update"
+    done
+    cd ..
 }
+
 
 uninstall ()
 {
     cd anonymine
     make uninstall
     cd ..
-    rm -r anonymine
+    rm -rf anonymine
+    
     for dependency in $dependencies; do
         ask "Uninstall $dependency" && cyg_setup -x "$dependency"
     done
+    
+    ask "Uninstall Cygwin" && /setup.exe -R "$(cygpath --windows /)"
 }
+
 
 install ()
 {
@@ -102,7 +118,8 @@ install ()
     for dependency in $dependencies; do
         cyg_setup -P "$dependency"
     done
-    git clone https://github.com/oskar-skog/anonymine.git
+    git clone https://github.com/oskar-skog/anonymine.git \
+        || fatal "Could not download Anonymine."
     update
     
     if [ $shortcut_d -ne 0 ]; then
@@ -125,7 +142,7 @@ install ()
 main ()
 {
     dependencies="git make python"
-    [ $# -ne 2 ] || usage
+    [ $# -ne 2 ] && usage
     case "$1" in
         user)
             setup_flags="-B"
@@ -155,3 +172,6 @@ main ()
             usage
     esac
 }
+
+
+main "$@"

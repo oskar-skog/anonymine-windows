@@ -61,7 +61,7 @@ cyg_setup ()
 update ()
 {
     echo >> log; echo >> log; echo >> log; echo >> log; echo >> log;
-    date >> log;
+    echo "Updating anonymine..." >> log; date >> log;
     
     cd anonymine
     while true; do
@@ -72,10 +72,11 @@ update ()
         error "Failed to update"
         ask "Fix manually" && {
             echo "Exit when you're done.";
-            bash;
+            script -a ../log;
             ask "Fixed it" && break;
         }
         ask "Retry" && continue
+        echo "Failed to update" >> ../log
         fatal "Failed to update"
     done
     cd ..
@@ -102,10 +103,17 @@ install ()
     shortcut_wrap ()
     {
         # {-P|-D} name cmd
-        mkshortcut "$mkshortcut_flags" "$1" -n "$2" -a '-lc '"$3" \
+        
+        # mkshortcut [-A] {-P|-D} -n <name> -a "-lc <command>" \
+        # -w <working_directory> -i <icon> /bin/bash.exe
+        
+        # Command: /bin/bash.exe -lc "<command>"
+        
+        mkshortcut "$mkshortcut_flags" "$1" -n "$2" -a "-lc '$3'" \
             -w "$(pwd)" -i "$(pwd)/icon.ico" /bin/bash.exe
     }
     
+    # Get configuration before doing time consuming work.
     shortcut_d=0
     shortcut_m=0
     maintenance_d=0
@@ -115,13 +123,24 @@ install ()
     ask "Desktop shortcut for update and uninstall" && maintenance_d=1
     ask "Menu shortcut for update and uninstall" && maintenance_m=1
     
+    echo >> log; echo >> log; echo >> log; echo >> log; echo >> log
+    echo "Installing Anonymine..." >> log; date >> log
+    # Dependencies:
     for dependency in $dependencies; do
-        cyg_setup -P "$dependency"
+        cyg_setup -P "$dependency" 2>&1 | tee -a log
     done
-    git clone https://github.com/oskar-skog/anonymine.git \
-        || fatal "Could not download Anonymine."
+    # Try to clone Anonymine
+    success=0
+    { git clone https://github.com/oskar-skog/anonymine.git && success=1;
+    } 2>&1 | tee -a log
+    if [ $success -eq 0 ]; then
+        echo "Could not download Anonymine." >> log;
+        fatal "Could not download Anonymine.";
+    fi
+    # update does ./configure && make && make install
     update
     
+    # Create those shortcuts.
     if [ $shortcut_d -ne 0 ]; then
         shortcut_wrap -D "Anonymine" "anonymine"
     fi

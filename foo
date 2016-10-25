@@ -3,7 +3,7 @@
 usage ()
 {
     cat > /dev/stderr << __EOF__
-Usage: ./foo {admin|user} {install|uninstall|update}" > /dev/stderr
+Usage: ./foo {admin|user} {install|uninstall|update}
 
 The working directory MUST be the directory that contains this script.
 

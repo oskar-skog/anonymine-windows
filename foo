@@ -54,7 +54,7 @@ fatal ()
 # Wrapper
 cyg_setup ()
 {
-    /setup.exe -q "$setup_flags" -R "$(cygpath --windows /)" $@
+    /setup.exe -q $setup_flags -R "$(cygpath --windows /)" $@
 }
 
 
@@ -120,15 +120,19 @@ install ()
 {
     shortcut_wrap ()
     {
-        # {-P|-D} name cmd
+        # Args:
+        #       {-P|-D} name cmd
+        # Invokes
+        #       mkshortcut [-A] {-P|-D} -n <name> -a "-lc <command>" \
+        #       -i <icon> /bin/bash.exe
+        # Command
+        #       /bin/bash.exe -lc "<command>"
+        #       -l flag needed for bash to set the PATH variable, etc
+        #       Use `cd` to move into the working directory
+        #
         
-        # mkshortcut [-A] {-P|-D} -n <name> -a "-lc <command>" \
-        # -w <working_directory> -i <icon> /bin/bash.exe
-        
-        # Command: /bin/bash.exe -lc "<command>"
-        
-        mkshortcut "$mkshortcut_flags" "$1" -n "$2" -a "-lc '$3'" \
-            -w "$(pwd)" -i "$(pwd)/icon.ico" /bin/bash.exe
+        mkshortcut $mkshortcut_flags "$1" -n "$2" -a "-lc '$3'" \
+            -i "$(pwd)/icon.ico" /bin/bash.exe
     }
     
     # Get configuration before doing time consuming work.
@@ -180,12 +184,16 @@ install ()
         shortcut_wrap -P "Anonymine" "anonymine"
     fi
     if [ $maintenance_d -ne 0 ]; then
-        shortcut_wrap -D "Update Anonymine" "./foo $self_mode update"
-        shortcut_wrap -D "Uninstall Anonymine" "./foo $self_mode uninstall"
+        shortcut_wrap -D "Update Anonymine" \
+            "cd \"$(pwd)\"; ./foo $self_mode update"
+        shortcut_wrap -D "Uninstall Anonymine" \
+            "cd \"$(pwd)\"; ./foo $self_mode uninstall"
     fi
     if [ $maintenance_m -ne 0 ]; then
-        shortcut_wrap -P "Update Anonymine" "./foo $self_mode update"
-        shortcut_wrap -P "Uninstall Anonymine" "./foo $self_mode uninstall"
+        shortcut_wrap -P "Update Anonymine" \
+            "cd \"$(pwd)\"; ./foo $self_mode update"
+        shortcut_wrap -P "Uninstall Anonymine" \
+            "cd \"$(pwd)\"; ./foo $self_mode uninstall"
     fi
 }
 

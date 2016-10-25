@@ -101,10 +101,14 @@ uninstall ()
 "/cygdrive/c/Users/Public/Desktop/"
 "$home/Desktop/"
     )
-    files=("Anonymine.lnk" "Uninstall Anonymine.lnk" "Update Anonymine.lnk")
+    files=(
+"$anonymine_lnk"
+"$update_anonymine_lnk"
+"$uninstall_anonymine_lnk"
+    )
     for directory in "${directories[@]}"; do
         for file in "${files[@]}"; do
-            rm "$directory$file"
+            rm "$directory$file" 2> /dev/null
         done
     done
     
@@ -112,7 +116,8 @@ uninstall ()
         ask "Uninstall $dependency" && cyg_setup -x "$dependency"
     done
     
-    ask "Uninstall Cygwin" && /setup.exe -R "$(cygpath --windows /)"
+    echo; echo; echo "You will have to uninstall Cygwin manually"
+    while ! ask "Quit"; do echo "No is not an option."; done
 }
 
 
@@ -178,21 +183,21 @@ install ()
     
     # Create those shortcuts.
     if [ $shortcut_d -ne 0 ]; then
-        shortcut_wrap -D "Anonymine" "anonymine"
+        shortcut_wrap -D "$anonymine_lnk" "anonymine"
     fi
     if [ $shortcut_m -ne 0 ]; then
-        shortcut_wrap -P "Anonymine" "anonymine"
+        shortcut_wrap -P "$anonymine_lnk" "anonymine"
     fi
     if [ $maintenance_d -ne 0 ]; then
-        shortcut_wrap -D "Update Anonymine" \
+        shortcut_wrap -D "$update_anonymine_lnk" \
             "cd \"$(pwd)\"; ./foo $self_mode update"
-        shortcut_wrap -D "Uninstall Anonymine" \
+        shortcut_wrap -D "$uninstall_anonymine_lnk" \
             "cd \"$(pwd)\"; ./foo $self_mode uninstall"
     fi
     if [ $maintenance_m -ne 0 ]; then
-        shortcut_wrap -P "Update Anonymine" \
+        shortcut_wrap -P "$update_anonymine_lnk" \
             "cd \"$(pwd)\"; ./foo $self_mode update"
-        shortcut_wrap -P "Uninstall Anonymine" \
+        shortcut_wrap -P "$uninstall_anonymine_lnk" \
             "cd \"$(pwd)\"; ./foo $self_mode uninstall"
     fi
 }
@@ -201,6 +206,10 @@ install ()
 main ()
 {
     dependencies="git make python"
+    anonymine_lnk="Anonymine.lnk"
+    update_anonymine_lnk="Update Anonymine.lnk"
+    uninstall_anonymine_lnk="Uninstall Anonymine.lnk"
+    
     [ $# -ne 2 ] && usage
     case "$1" in
         user)

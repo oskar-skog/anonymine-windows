@@ -2,7 +2,19 @@
 
 usage ()
 {
-    echo "Usage: ./foo {admin|user} {install|uninstall|update}" > /dev/stderr
+    cat > /dev/stderr << __EOF__
+Usage: ./foo {admin|user} {install|uninstall|update}" > /dev/stderr
+
+The working directory MUST be the directory that contains this script.
+
+If you run this script from any other directory, a velociraptor will
+jump from the Windows registry and change all your passwords to
+"Tr0ub4dor&3".
+
+
+"admin" vs "user" refers to which batch file was originally executed.
+Don't start mixing "admin" and "user".
+__EOF__
     exit 1
 }
 

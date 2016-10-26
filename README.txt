@@ -1,9 +1,6 @@
 Installation instructions for Windows
 =====================================
     
-    The game doesn't work on native Windows, so it will install Cygwin
-    automatically.
-    
     Notes
     =====
     
@@ -14,7 +11,13 @@ Installation instructions for Windows
         
         - There seems to be some issue with resizing, possibly the terminals
           fault.
-     
+
+        - Do not remove, move or rename the extracted directory.
+          It is needed for updating and uninstalling Anonymine.
+        
+        - There is a log file in case something goes worng.
+    
+    
     1.  Extract the directory "anonymine-windows" from the zip file.
     
     2.  Enter that extracted folder and start Windows-admin[.bat] or
@@ -27,3 +30,21 @@ Installation instructions for Windows
         (This will only happen the first time you install the game.)
     
     4.  Answer the questions that appear in the terminal window.
+    
+    5.  Do not remove, move or rename the extracted directory.
+        It is needed for updating and uninstalling Anonymine.
+
+
+
+Foo bar baz quux lorem ipsum
+----------------------------
+
+    The game doesn't work on native Windows, so it will install Cygwin
+    automatically.
+    
+      Winows-user.bat       Cygwin in home directory, shortcuts for this user
+      Windows-admin.bat     Cygwin in C:\, shortcuts for all users
+      foo                   The script that does everything, with Cygwin
+      icon.ico              Self-explanatory
+    * anonymine/            Cloned from reoo
+    * log                   git pull|clone, ./update, make, make install

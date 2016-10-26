@@ -5,6 +5,7 @@ usage ()
     cat > /dev/stderr << __EOF__
 Usage: ./foo {admin|user} {install|uninstall|update}
 
+
 The working directory MUST be the directory that contains this script.
 
 If you run this script from any other directory, a velociraptor will
@@ -83,8 +84,8 @@ update ()
         # Not reached, hopefully
         error "Failed to update"
         ask "Fix manually" && {
-            echo "Exit when you're done.";
-            script -a ../log;
+            echo "This is a new shell; Exit when you're done fixing.";
+            script -q -a ../log;
             ask "Fixed it" && break;
         }
         ask "Retry" && continue

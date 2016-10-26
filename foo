@@ -76,7 +76,7 @@ update ()
     echo >> log; echo >> log; echo >> log; echo >> log; echo >> log;
     echo "Updating anonymine..." >> log; date >> log;
     
-    cd anonymine
+    cd anonymine || fatal "Cloned repo of Anonymine not found"
     while true; do
         # Update and log
         { git pull && ./configure -v && make && make install && break;

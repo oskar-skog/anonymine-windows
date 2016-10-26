@@ -20,10 +20,13 @@ __EOF__
 }
 
 # Globals
-#       dependencies
-#       self_mode
-#       setup_flags
-#       mkshortcut_flags
+#       dependencies                    "git python make"
+#       self_mode                       "user" or "admin"; depends on $1
+#       setup_flags                     "--wait" or "-B"; depends on $1
+#       mkshortcut_flags                none or "-A"; depends on $1
+#       anonymine_lnk                   "Anonymine.lnk"
+#       update_anonymine_lnk            "Update Anonymine.lnk"
+#       uninstall_anonymine_lnk         "Uninstall Anonymine.lnk"
 
 
 ask ()
@@ -43,7 +46,7 @@ ask ()
 error ()
 {
     while [ $# -gt 0 ]; do
-        echo "<<error>> $1" > /dev/stderr
+        echo "<<error>> $1" >&2
         shift
     done
 }
@@ -52,10 +55,10 @@ error ()
 fatal ()
 {
     while [ $# -gt 0 ]; do
-        echo "<<fatal>> $1" > /dev/stderr
+        echo "<<fatal>> $1" >&2
         shift
     done
-    echo 'Execution stopped due to fatal error.' > /dev/stderr
+    echo 'Execution stopped due to fatal error.' >&2
     # Terminal's gonna go poof!
     while ! ask "Quit"; do
         error "No is not an option"
@@ -73,23 +76,28 @@ cyg_setup ()
 
 update ()
 {
-    echo >> log; echo >> log; echo >> log; echo >> log; echo >> log;
-    echo "Updating anonymine..." >> log; date >> log;
+    echo >>log; echo >>log; echo >>log; echo >>log; echo >>log; echo >>log;
+    echo "Updating anonymine..." >>log; date >>log;
     
-    cd anonymine || fatal "Cloned repo of Anonymine not found"
+    cd anonymine || {
+        echo "FATAL: Cloned repo of Anonymine not found" >>log;
+        fatal "Cloned repo of Anonymine not found";
+    }
     while true; do
         # Update and log
-        { git pull && ./configure -v && make && make install && break;
-            } 2>&1 | tee -a ../log
+        {
+            git pull && ./configure -v && make && make install && break;
+        } >>../log 2>&1
         # Not reached, hopefully
         error "Failed to update"
         ask "Fix manually" && {
+            less ../log;
             echo "This is a new shell; Exit when you're done fixing.";
             script -q -a ../log;
             ask "Fixed it" && break;
         }
         ask "Retry" && continue
-        echo "Failed to update" >> ../log
+        echo "Failed to update" >>../log
         fatal "Failed to update"
     done
     cd ..
@@ -98,11 +106,12 @@ update ()
 
 uninstall ()
 {
-    # Failing to cd into anonymine, but succeeding to cd to ..
+    # Failing to cd into anonymine, but succeeding to cd to ../ .....
     (cd anonymine; make uninstall; cd ..)
-    # caused really nasty trouble:
+    # ..... caused really nasty trouble:
     rm -rf anonymine
     
+    # Remove shortcuts:
     # http://superuser.com/questions/86078/where-do-start-menu-all-programs-shortcuts-reside
     home="$(cygpath --unix $USERPROFILE)"
     directories=(
@@ -148,7 +157,6 @@ install ()
         #       -l flag needed for bash to set the PATH variable, etc
         #       Use `cd` to move into the working directory
         #
-        
         mkshortcut $mkshortcut_flags "$1" -n "$2" -a "-lc '$3'" \
             -i "$(pwd)/icon.ico" /bin/bash.exe
     }
@@ -180,13 +188,14 @@ install ()
     # Start the time consuming work.
     echo >> log; echo >> log; echo >> log; echo >> log; echo >> log
     echo "Installing Anonymine..." >> log; date >> log
-    # Dependencies:
+    
     for dependency in $dependencies; do
         cyg_setup -P "$dependency" 2>&1 | tee -a log
     done
+    
     # This one is here for the convenience of the debuggers.
     [ -d anonymine ] && ask "Remove old ./anonymine/" && rm -rf anonymine
-    # Try to clone Anonymine
+    
     git clone https://github.com/oskar-skog/anonymine.git || {
         echo "Could not download Anonymine." >> log;
         fatal "Could not download Anonymine.";

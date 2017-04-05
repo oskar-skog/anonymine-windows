@@ -1,5 +1,10 @@
 #!/bin/sh
+version="$(git log --oneline | wc -l)"
+echo "Version: $version"
+
 mkdir anonymine-windows
-cp -t anonymine-windows foo README.txt Windows-admin.bat Windows-user.bat icon.ico
-zip -r ~www-data/archive/anonymine-windows/anonymine-windows-"$1".zip anonymine-windows
+cp -t anonymine-windows foo README.txt Windows-admin.bat Windows-user.bat \
+    icon.ico
+zip -r ~www-data/archive/anonymine-windows/anonymine-windows-"${version}".zip \
+    anonymine-windows
 rm -r anonymine-windows

@@ -1,3 +1,9 @@
+NOTICE:   This has never been properly tested.
+
+I'd appreciate feedback and bugfixes.
+
+
+
 Installation instructions for Windows
 =====================================
     
